@@ -47,7 +47,7 @@
 "use strict";
 
 /* ==========================================================================
-   1. CONFIGURACIÓN — README, "Conectar la página con el puente"
+   1. CONFIGURACIÓN — README, "Configurar el puente (Apps Script)"
    ========================================================================== */
 
 /**
@@ -78,7 +78,8 @@ const CONFIG = {
   // GitHub muestra un error "404" a quien NO sea colaborador del repositorio
   // cuando el enlace incluye etiquetas. Déjelo en false para que CUALQUIER
   // persona pueda registrar temas. La etiqueta se agrega automáticamente con
-  // el archivo .github/workflows/radar-etiqueta.yml (README, anexo "Modo sin puente").
+  // un flujo de GitHub Actions. Este modo además exige permitir api.github.com en la
+  // política de seguridad (CSP) de index.html, que hoy solo permite el puente.
   labelInUrl: false,
 
   // true = solo se cuentan reportes creados por el dueño o por colaboradores
@@ -506,7 +507,7 @@ function puenteConfigurado() {
 
 function textoConfiguracionPendiente() {
   return CONFIG.dataSource === "puente"
-    ? "Pegue la URL del puente en app.js (puenteUrl; README, paso P6) o active DEMO_MODE = true."
+    ? "Pegue la URL del puente en app.js (puenteUrl; README, «Configurar el puente») o active DEMO_MODE = true."
     : "Cambie owner y repo al inicio de app.js o active DEMO_MODE = true.";
 }
 
