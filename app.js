@@ -110,6 +110,13 @@ const DIVISIONES = [];
 const PERSONAS = [];
 const ACTIVOS = [];
 const INSTANCIAS = [];
+/**
+ * Explicación de cada instancia (solo se muestra en el formulario).
+ * En la hoja, pestaña "Listas", se escribe al final entre paréntesis:
+ *   Nombre de la instancia (explicación para quien reporta)
+ * En reportes, filtros, gráficos y Excel se usa solo el nombre.
+ */
+const DESCRIPCION_INSTANCIAS = new Map();
 
 /**
  * Solo para dataSource: "github" (sin puente). En ese modo no existe un lugar
@@ -1197,6 +1204,16 @@ function leerCatalogosGuardados() {
   return c && c.catalogos ? c.catalogos : null;
 }
 
+/**
+ * Separa "Nombre (explicación)" en { nombre, descripcion }.
+ * Solo toma como explicación el último paréntesis, si está al final del texto.
+ */
+function separarDescripcion(texto) {
+  const limpio = String(texto ?? "").trim();
+  const m = limpio.match(/^(.*\S)\s*\(([^()]+)\)$/);
+  return m ? { nombre: m[1].trim(), descripcion: m[2].trim() } : { nombre: limpio, descripcion: "" };
+}
+
 /** Copia las listas recibidas en DIVISIONES, PERSONAS, ACTIVOS e INSTANCIAS y repinta. */
 function aplicarCatalogos(c, { guardar = true } = {}) {
   if (!c || typeof c !== "object") return false;
@@ -1207,9 +1224,13 @@ function aplicarCatalogos(c, { guardar = true } = {}) {
     .map((p) => ({ nombre: String((p && p.nombre) || "").trim(), email: String((p && p.email) || "").trim().toLowerCase() }))
     .filter((p) => p.nombre);
 
+  const instancias = textos(c.instancias).map(separarDescripcion).filter((i) => i.nombre);
+
   DIVISIONES.splice(0, DIVISIONES.length, ...textos(c.divisiones));
   ACTIVOS.splice(0, ACTIVOS.length, ...textos(c.activos));
-  INSTANCIAS.splice(0, INSTANCIAS.length, ...textos(c.instancias));
+  INSTANCIAS.splice(0, INSTANCIAS.length, ...instancias.map((i) => i.nombre));
+  DESCRIPCION_INSTANCIAS.clear();
+  for (const i of instancias) if (i.descripcion) DESCRIPCION_INSTANCIAS.set(i.nombre, i.descripcion);
   PERSONAS.splice(0, PERSONAS.length, ...personas);
   state.catalogosCargados = true;
 
@@ -1488,7 +1509,11 @@ function pintarListasFormulario() {
   INSTANCIAS.forEach((instancia, i) => {
     const id = `f-inst-${i}`;
     const casilla = crear("input", { attrs: { type: "checkbox", id, name: "instancias", value: instancia, checked: marcadas.has(instancia) } });
-    listaInstancias.append(crear("label", { className: "choice", attrs: { for: id } }, [casilla, crear("span", { text: instancia })]));
+    const descripcion = DESCRIPCION_INSTANCIAS.get(instancia);
+    const texto = descripcion
+      ? crear("span", {}, [instancia, crear("br"), crear("small", { className: "muted", text: descripcion })])
+      : crear("span", { text: instancia });
+    listaInstancias.append(crear("label", { className: "choice", attrs: { for: id } }, [casilla, texto]));
   });
   if (!INSTANCIAS.length) listaInstancias.append(crear("p", { className: "field-hint", text: `${aviso}.` }));
 }
